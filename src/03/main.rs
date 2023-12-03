@@ -67,7 +67,7 @@ fn product_if_adjacent_to_n_numbers(input: &[Vec<char>], x: usize, y: usize, n: 
 }
 
 fn extract_number(input: &[Vec<char>], mut x: usize, y: usize) -> u32 {
-    while x > 0 && input[y][x-1].is_ascii_digit() {
+    while x > 0 && input[y][x - 1].is_ascii_digit() {
         x -= 1;
     }
     let mut n = 0;
