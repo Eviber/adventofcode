@@ -8,7 +8,7 @@ fn main() {
     let mut sum_minimum_powers = 0;
     for line in input.lines() {
         let mut split = line.split(':');
-        let id: u32 = (&(split.next().expect("no id"))[5..])
+        let id: u32 = (split.next().expect("no id"))[5..]
             .parse()
             .expect("parsing failed");
         let split = split.next().unwrap().split(';');
