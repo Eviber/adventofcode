@@ -28,8 +28,7 @@ fn matching_numbers(line: &str) -> u32 {
         .filter(|n| !n.is_empty())
         .map(|n| n.parse().unwrap())
         .collect();
-    line
-        .next()
+    line.next()
         .unwrap()
         .split(' ')
         .filter(|n| !n.is_empty())
