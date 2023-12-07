@@ -7,7 +7,10 @@ pub fn part1(input: &str) -> usize {
         let possible_winning_hold_times = (0..time)
             .filter(|&i| record < distance_from_hold(i, time))
             .count();
-        println!("{:3}ms, {:4}mm => {}", time, record, possible_winning_hold_times);
+        println!(
+            "{:3}ms, {:4}mm => {}",
+            time, record, possible_winning_hold_times
+        );
         product *= possible_winning_hold_times;
     }
     product
