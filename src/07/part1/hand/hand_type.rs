@@ -1,5 +1,5 @@
-use std::fmt::{Debug, Display};
 use std::cmp::Ordering;
+use std::fmt::{Debug, Display};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum HandType {

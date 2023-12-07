@@ -35,8 +35,8 @@ impl Ord for Card {
             (_, Card::King) => Ordering::Less,
             (Card::Queen, _) => Ordering::Greater,
             (_, Card::Queen) => Ordering::Less,
-            (Card::Jack, _) => Ordering::Greater,
-            (_, Card::Jack) => Ordering::Less,
+            (Card::Jack, _) => Ordering::Less,
+            (_, Card::Jack) => Ordering::Greater, // Jack is the lowest
             (Card::Number(a), Card::Number(b)) => a.cmp(b),
         }
     }
