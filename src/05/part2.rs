@@ -62,8 +62,7 @@ pub fn part2(input: &str) -> u64 {
 
 fn get_seeds(line: &str) -> Vec<Range> {
     let line = &line[line.find(' ').unwrap() + 1..];
-    line.trim()
-        .split_whitespace()
+    line.split_whitespace()
         .map(|s| s.parse().unwrap())
         .collect::<Vec<u64>>()
         .chunks(2)
@@ -77,6 +76,5 @@ fn get_seeds(line: &str) -> Vec<Range> {
 fn get_rules(part: &str) -> impl Iterator<Item = Rule> + '_ {
     let mut lines = part.lines();
     println!("\n{}", lines.next().unwrap());
-    lines
-        .map(|line| line.parse().unwrap())
+    lines.map(|line| line.parse().unwrap())
 }

@@ -1,4 +1,7 @@
-use std::{str::FromStr, fmt::{Display, Debug}};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 #[derive(Clone, Copy)]
 pub struct Range {
@@ -97,7 +100,7 @@ impl FromStr for Rule {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut values = s.trim().split_whitespace().map(|s| s.parse::<u64>());
+        let mut values = s.split_whitespace().map(|s| s.parse::<u64>());
         Ok(Self::new(
             values
                 .next()
@@ -117,7 +120,12 @@ impl FromStr for Rule {
 
 impl Display for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{} => {:+}]", self.src, self.dst.start as isize - self.src.start as isize )
+        write!(
+            f,
+            "[{} => {:+}]",
+            self.src,
+            self.dst.start as isize - self.src.start as isize
+        )
     }
 }
 
