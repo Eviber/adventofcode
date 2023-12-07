@@ -4,16 +4,19 @@ use crate::rule::Rule;
 pub fn part2(input: &str) -> u64 {
     let mut parts = input.split("\n\n");
     let mut values = get_seeds(parts.next().unwrap());
+    for value in &values {
+        print!("{} ; ", value);
+    }
+    println!();
     for part in parts {
         let mut next_values = Vec::new();
         let mut leftovers = Vec::new();
         let rules = get_rules(part);
         for rule in rules {
-            println!("\nrule: {:?}", rule);
+            println!("rule: {:?}", rule);
             let mut to_remove = Vec::new();
             for (i, &value) in values.iter().enumerate() {
                 let (before, matched, after) = rule.apply_range(value);
-                println!("{} -> {} => {:?}, {:?}, {:?}", value.start, value.end(), before, matched, after);
                 if let Some(before) = before {
                     leftovers.push(before);
                 }
@@ -21,6 +24,7 @@ pub fn part2(input: &str) -> u64 {
                     leftovers.push(after);
                 }
                 if let Some(matched) = matched {
+                    println!("{} => {:?}, {:?}, {:?}", value, before, matched, after);
                     next_values.push(matched);
                     to_remove.push(i);
                 }
@@ -31,10 +35,26 @@ pub fn part2(input: &str) -> u64 {
             values.append(&mut leftovers);
         }
         values.append(&mut next_values);
+        println!();
+        values.sort_by(|a, b| a.start.cmp(&b.start));
         for value in &values {
-            print!("{} -> {}, ", value.start, value.end());
+            print!("{} ; ", value);
         }
         println!();
+        let mut merged: Vec<Range> = Vec::new();
+        for value in &values {
+            if let Some(last) = merged.last_mut() {
+                if last.end() >= value.start {
+                    last.length = value.start - last.start + value.length;
+                    continue;
+                }
+            }
+            merged.push(*value);
+        }
+        values = merged;
+        for value in &values {
+            print!("{} ; ", value);
+        }
         println!();
     }
     values.iter().map(|&range| range.start).min().unwrap()
@@ -55,7 +75,8 @@ fn get_seeds(line: &str) -> Vec<Range> {
 }
 
 fn get_rules(part: &str) -> impl Iterator<Item = Rule> + '_ {
-    part.lines()
-        .skip(1)
+    let mut lines = part.lines();
+    println!("\n{}", lines.next().unwrap());
+    lines
         .map(|line| line.parse().unwrap())
 }

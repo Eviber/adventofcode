@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::{str::FromStr, fmt::{Display, Debug}};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Range {
     pub start: u64,
     pub length: u64,
@@ -31,7 +31,19 @@ impl Range {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+impl Display for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}..{}", self.start, self.end())
+    }
+}
+
+impl Debug for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct Rule {
     dst: Range,
     src: Range,
@@ -100,5 +112,17 @@ impl FromStr for Rule {
                 .ok_or("no len")?
                 .map_err(|_| "len parse error")?,
         ))
+    }
+}
+
+impl Display for Rule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{} => {:+}]", self.src, self.dst.start as isize - self.src.start as isize )
+    }
+}
+
+impl Debug for Rule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
     }
 }
