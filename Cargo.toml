@@ -5,6 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[dependencies]
+rayon = "1.8"
+
 [dev-dependencies]
 test-case = "*"
 
@@ -35,3 +38,7 @@ path = "src/06/main.rs"
 [[bin]]
 name = "day7"
 path = "src/07/main.rs"
+
+[[bin]]
+name = "day8"
+path = "src/08/main.rs"
