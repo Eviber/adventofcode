@@ -41,9 +41,7 @@ pub fn solve(input: &str) -> u64 {
         if weight > max_weight {
             max_weight = weight;
         }
-        let dir = grid[pos.y][pos.x]
-            .out_direction(dir)
-            .unwrap();
+        let dir = grid[pos.y][pos.x].out_direction(dir).unwrap();
         let (x, y) = dir.position(pos.x, pos.y).unwrap();
         if grid.get(y).is_none() || grid[y].get(x).is_none() {
             unreachable!();

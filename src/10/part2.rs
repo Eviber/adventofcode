@@ -1,4 +1,8 @@
-use std::{collections::{HashSet, VecDeque}, str::FromStr, fmt::Display};
+use std::{
+    collections::{HashSet, VecDeque},
+    fmt::Display,
+    str::FromStr,
+};
 
 pub fn solve(input: &str) -> u64 {
     let mut grid: Grid = input.parse().unwrap();
@@ -50,9 +54,7 @@ impl Grid {
                 continue;
             }
             visited.insert(pos);
-            let dir = self.grid[pos.y][pos.x]
-                .out_direction(dir)
-                .unwrap();
+            let dir = self.grid[pos.y][pos.x].out_direction(dir).unwrap();
             let (x, y) = dir.position(pos.x, pos.y).unwrap();
             if self.grid.get(y).is_none() || self.grid[y].get(x).is_none() {
                 unreachable!();
@@ -79,8 +81,7 @@ impl Grid {
             let mut new_row: Vec<Tile> = Vec::new();
             new_row.push(self.grid[y][0]);
             for x in 1..self.grid[y].len() {
-                if self.grid[y][x].has_direction(Left) 
-                    && self.grid[y][x - 1].has_direction(Right) {
+                if self.grid[y][x].has_direction(Left) && self.grid[y][x - 1].has_direction(Right) {
                     new_row.push('-'.try_into().unwrap());
                 } else {
                     new_row.push(Tile::Empty);
@@ -95,8 +96,7 @@ impl Grid {
         for y in 1..self.grid.len() {
             let mut new_row: Vec<Tile> = Vec::new();
             for x in 0..self.grid[y].len() {
-                if self.grid[y][x].has_direction(Up) 
-                    && self.grid[y - 1][x].has_direction(Down) {
+                if self.grid[y][x].has_direction(Up) && self.grid[y - 1][x].has_direction(Down) {
                     new_row.push('|'.try_into().unwrap());
                 } else {
                     new_row.push(Tile::Empty);
@@ -167,7 +167,10 @@ fn find_edges(grid: &Vec<Vec<Tile>>) -> Vec<Position> {
             edges.push(Position { x: 0, y });
         }
         if grid[y][grid[y].len() - 1] == Tile::Empty {
-            edges.push(Position { x: grid[y].len() - 1, y });
+            edges.push(Position {
+                x: grid[y].len() - 1,
+                y,
+            });
         }
     }
     for x in 0..grid[0].len() {
@@ -175,7 +178,10 @@ fn find_edges(grid: &Vec<Vec<Tile>>) -> Vec<Position> {
             edges.push(Position { x, y: 0 });
         }
         if grid[grid.len() - 1][x] == Tile::Empty {
-            edges.push(Position { x, y: grid.len() - 1 });
+            edges.push(Position {
+                x,
+                y: grid.len() - 1,
+            });
         }
     }
     edges
