@@ -25,7 +25,9 @@ pub fn solve(input: &str) -> u64 {
         Direction::Left,
         Direction::Right,
     ] {
-        let (x, y) = dir.position(x, y);
+        let Some((x, y)) = dir.position(x, y) else {
+            continue;
+        };
         if grid[y][x].has_direction(dir.opposite()) {
             queue.push_back((Position { x, y }, *dir, 1));
         }
@@ -42,7 +44,7 @@ pub fn solve(input: &str) -> u64 {
         let dir = grid[pos.y][pos.x]
             .out_direction(dir)
             .unwrap();
-        let (x, y) = dir.position(pos.x, pos.y);
+        let (x, y) = dir.position(pos.x, pos.y).unwrap();
         if grid.get(y).is_none() || grid[y].get(x).is_none() {
             unreachable!();
         }
@@ -76,13 +78,18 @@ impl Direction {
         }
     }
 
-    fn position(&self, x: usize, y: usize) -> (usize, usize) {
-        match self {
-            Direction::Up => (x, y - 1),
-            Direction::Down => (x, y + 1),
-            Direction::Left => (x - 1, y),
-            Direction::Right => (x + 1, y),
-        }
+    fn position(&self, x: usize, y: usize) -> Option<(usize, usize)> {
+        let x = match self {
+            Direction::Left => x.checked_sub(1)?,
+            Direction::Right => x + 1,
+            _ => x,
+        };
+        let y = match self {
+            Direction::Up => y.checked_sub(1)?,
+            Direction::Down => y + 1,
+            _ => y,
+        };
+        Some((x, y))
     }
 }
 
