@@ -101,7 +101,11 @@ impl FromStr for Map {
                 empty_rows.push(y);
             }
         }
-        Ok(Map { tiles, empty_columns, empty_rows })
+        Ok(Map {
+            tiles,
+            empty_columns,
+            empty_rows,
+        })
     }
 }
 
