@@ -1,5 +1,5 @@
-use std::sync::{OnceLock, Mutex};
-use std::{fmt::Display, collections::HashMap};
+use std::sync::{Mutex, OnceLock};
+use std::{collections::HashMap, fmt::Display};
 
 use rayon::prelude::*;
 
@@ -20,12 +20,16 @@ pub fn solve(input: &str) -> u64 {
     }
     println!();
     println!();
-    let count = rows.into_par_iter()
+    let count = rows
+        .into_par_iter()
         .map(|mut row| row.count_solutions())
         .inspect(|s| println!("{}", s))
         .sum();
     println!("\n\n");
-    println!("memoization HashMap size: {}", COUNTS.get().unwrap().lock().unwrap().len());
+    println!(
+        "memoization HashMap size: {}",
+        COUNTS.get().unwrap().lock().unwrap().len()
+    );
     count
 }
 
@@ -112,7 +116,7 @@ impl Row {
             // let copy = self.clone();
             self.deduce();
             // if copy != *self {
-                // println!("{}\n{}\n", copy, self);
+            // println!("{}\n{}\n", copy, self);
             // }
         }
         if !self.can_be_valid() {
