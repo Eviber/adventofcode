@@ -1,35 +1,28 @@
-use std::sync::{Mutex, OnceLock};
 use std::{collections::HashMap, fmt::Display};
 
 use rayon::prelude::*;
 
-// HashMap of every call made to count_solutions with the result
-// (aka memoization)
-static COUNTS: OnceLock<Mutex<HashMap<Row, u64>>> = OnceLock::new();
-
 pub fn solve(input: &str) -> u64 {
-    println!("{}", input);
+    // println!("{}", input);
     // initialize the memoization HashMap
-    COUNTS.get_or_init(|| Mutex::new(HashMap::new()));
     let mut rows: Vec<Row> = input.lines().map(Row::from).collect();
     rows.iter_mut().for_each(Row::unfold);
     rows.iter_mut().for_each(Row::simplify);
-    println!("\nafter unfold:");
-    for row in &rows {
-        println!("{}", row);
-    }
+    // println!("\nafter unfold:");
+    // for row in &rows {
+    //     println!("{}", row);
+    // }
     println!();
     println!();
     let count = rows
         .into_par_iter()
-        .map(|mut row| row.count_solutions())
-        .inspect(|s| println!("{}", s))
+        .map(|mut row| {
+            let mut memo = HashMap::new();
+            row.count_solutions(&mut memo)
+        })
+        //.inspect(|s| println!("{}", s))
         .sum();
     println!("\n\n");
-    println!(
-        "memoization HashMap size: {}",
-        COUNTS.get().unwrap().lock().unwrap().len()
-    );
     count
 }
 
@@ -95,21 +88,15 @@ impl Row {
             .all(|(springs, &len)| springs.len() == len)
     }
 
-    fn count_solutions(&mut self) -> u64 {
+    fn count_solutions(&mut self, memo: &mut HashMap<Row, u64>) -> u64 {
         // look up the result in the memoization HashMap
-        {
-            let counts = COUNTS.get().unwrap();
-            if let Some(count) = counts.lock().unwrap().get(self) {
-                println!("memoized!");
-                return *count;
-            }
+        if let Some(count) = memo.get(self) {
+            println!("memoized!");
+            return *count;
         }
         if !self.can_be_valid() {
             // update the memoization HashMap
-            {
-                let mut counts = COUNTS.get().unwrap().lock().unwrap();
-                counts.insert(self.clone(), 0);
-            }
+            memo.insert(self.clone(), 0);
             return 0;
         }
         {
@@ -120,17 +107,11 @@ impl Row {
             // }
         }
         if !self.can_be_valid() {
-            {
-                let mut counts = COUNTS.get().unwrap().lock().unwrap();
-                counts.insert(self.clone(), 0);
-            }
+            memo.insert(self.clone(), 0);
             return 0;
         }
         let Some(i) = self.springs.iter().position(|s| s.is_unknown()) else {
-            {
-                let mut counts = COUNTS.get().unwrap().lock().unwrap();
-                counts.insert(self.clone(), self.is_valid() as u64);
-            }
+            memo.insert(self.clone(), self.is_valid() as u64);
             return self.is_valid() as u64;
         };
         let mut count = 0;
@@ -138,18 +119,15 @@ impl Row {
             let mut row = self.clone();
             row.springs[i] = Spring::Broken;
             if row.can_be_valid() {
-                count += row.count_solutions();
+                count += row.count_solutions(memo);
             }
             let mut row = self.clone();
             row.springs[i] = Spring::Intact;
             if row.can_be_valid() {
-                count += row.count_solutions();
+                count += row.count_solutions(memo);
             }
         }
-        {
-            let mut counts = COUNTS.get().unwrap().lock().unwrap();
-            counts.insert(self.clone(), count);
-        }
+        memo.insert(self.clone(), count);
         count
     }
 
