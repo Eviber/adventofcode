@@ -3,27 +3,9 @@ use std::{collections::HashMap, fmt::Display};
 use rayon::prelude::*;
 
 pub fn solve(input: &str) -> u64 {
-    // println!("{}", input);
-    // initialize the memoization HashMap
     let mut rows: Vec<Row> = input.lines().map(Row::from).collect();
     rows.iter_mut().for_each(Row::unfold);
-    rows.iter_mut().for_each(Row::simplify);
-    // println!("\nafter unfold:");
-    // for row in &rows {
-    //     println!("{}", row);
-    // }
-    println!();
-    println!();
-    let count = rows
-        .into_par_iter()
-        .map(|mut row| {
-            let mut memo = HashMap::new();
-            row.count_solutions(&mut memo)
-        })
-        //.inspect(|s| println!("{}", s))
-        .sum();
-    println!("\n\n");
-    count
+    rows.into_par_iter().map(Row::count_solutions).sum()
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -55,131 +37,73 @@ impl Row {
         self.broken_sets = self.broken_sets.repeat(5);
     }
 
-    fn simplify(&mut self) {
-        let sets: Vec<Vec<Spring>> = self
-            .springs
-            .split(|s| s.is_intact())
-            .filter(|s| !s.is_empty())
-            .map(|s| s.to_vec())
-            .collect();
-        self.springs = sets.join(&Spring::Intact);
+    #[inline]
+    fn iter_springs(&self) -> std::iter::Copied<std::slice::Iter<'_, Spring>> {
+        self.springs.iter().copied()
     }
 
-    fn is_valid(&self) -> bool {
-        self.springs
-            .split(|s| !s.is_broken())
-            .filter(|s| !s.is_empty())
-            .count()
-            == self.broken_sets.len()
-            && self
-                .springs
-                .split(|s| !s.is_broken())
-                .filter(|s| !s.is_empty())
-                .zip(self.broken_sets.iter())
-                .all(|(springs, &len)| springs.len() == len)
-    }
-
-    fn can_be_valid(&self) -> bool {
-        self.springs
-            .split(|s| s.is_intact())
-            .filter(|s| !s.is_empty())
-            .take_while(|s| !s.contains(&Spring::Unknown))
-            .zip(self.broken_sets.iter())
-            .all(|(springs, &len)| springs.len() == len)
-    }
-
-    fn count_solutions(&mut self, memo: &mut HashMap<Row, u64>) -> u64 {
-        // look up the result in the memoization HashMap
-        if let Some(count) = memo.get(self) {
-            println!("memoized!");
-            return *count;
+    fn count_solutions_inner(mut self, memo: &mut HashMap<Row, u64>) -> u64 {
+        // skip intact springs
+        let n = self.iter_springs().take_while(Spring::is_intact).count();
+        self.springs.drain(..n);
+        if self.broken_sets.is_empty() && !self.springs.iter().any(Spring::is_broken) {
+            return 1;
         }
-        if !self.can_be_valid() {
-            // update the memoization HashMap
-            memo.insert(self.clone(), 0);
+        if self.broken_sets.is_empty()
+            || self.springs.is_empty()
+            || self.broken_sets.iter().sum::<usize>() + self.broken_sets.len() - 1
+                > self.springs.len()
+        {
             return 0;
         }
-        {
-            // let copy = self.clone();
-            self.deduce();
-            // if copy != *self {
-            // println!("{}\n{}\n", copy, self);
-            // }
+        if let Some(&res) = memo.get(&self) {
+            return res;
         }
-        if !self.can_be_valid() {
-            memo.insert(self.clone(), 0);
+        let input = self.clone();
+
+        if self.springs[0].is_unknown() {
+            let mut broken = self.clone();
+            let mut intact = self;
+            broken.springs[0] = Spring::Broken;
+            intact.springs[0] = Spring::Intact;
+            let res = broken.count_solutions_inner(memo) + intact.count_solutions_inner(memo);
+            memo.insert(input, res);
+            return res;
+        }
+
+        let mut set_len = self.broken_sets[0];
+        if Some(&Spring::Broken) == self.springs.get(set_len)
+            || self.springs.iter().take(set_len).any(Spring::is_intact)
+        {
+            // if the set cannot be ended or finished, no solutions
             return 0;
         }
-        let Some(i) = self.springs.iter().position(|s| s.is_unknown()) else {
-            memo.insert(self.clone(), self.is_valid() as u64);
-            return self.is_valid() as u64;
-        };
-        let mut count = 0;
-        {
-            let mut row = self.clone();
-            row.springs[i] = Spring::Broken;
-            if row.can_be_valid() {
-                count += row.count_solutions(memo);
-            }
-            let mut row = self.clone();
-            row.springs[i] = Spring::Intact;
-            if row.can_be_valid() {
-                count += row.count_solutions(memo);
-            }
-        }
-        memo.insert(self.clone(), count);
-        count
+        // add one for the separating dot, if needed
+        set_len += (self.springs.len() > set_len) as usize;
+        self.springs.drain(..set_len);
+        self.broken_sets.remove(0);
+        let res = self.count_solutions_inner(memo);
+        memo.insert(input, res);
+        res
     }
 
-    fn deduce(&mut self) {
-        let Some(first_unknown) = self.springs.iter().position(|s| s.is_unknown()) else {
-            return;
-        };
-        if first_unknown == 0 || self.springs[first_unknown - 1].is_intact() {
-            return;
-        }
-        let mut broken_set_start = first_unknown - 1;
-        while broken_set_start > 0 && self.springs[broken_set_start - 1].is_broken() {
-            broken_set_start -= 1;
-        }
-        let mut broken_set_len = first_unknown - broken_set_start;
-        let broken_set_index = self
-            .springs
-            .split(|s| s.is_intact())
-            .filter(|s| !s.is_empty())
-            .enumerate()
-            .find(|(_, springs)| springs.contains(&Spring::Unknown))
-            .map(|(i, _)| i)
-            .expect("There should be an unknown spring");
-        if broken_set_index >= self.broken_sets.len() {
-            return;
-        }
-        let mut i = first_unknown;
-        while i < self.springs.len()
-            && broken_set_len < self.broken_sets[broken_set_index]
-            && !self.springs[i].is_intact()
-        {
-            self.springs[i] = Spring::Broken;
-            i += 1;
-            broken_set_len += 1;
-        }
-        if i < self.springs.len() && self.springs[i].is_unknown() {
-            self.springs[i] = Spring::Intact;
-        }
+    fn count_solutions(self) -> u64 {
+        let mut memo = HashMap::new();
+        self.count_solutions_inner(&mut memo)
     }
 }
 
 impl Spring {
-    fn is_intact(self) -> bool {
-        self == Spring::Intact
+    fn is_intact(&self) -> bool {
+        *self == Spring::Intact
     }
 
-    fn is_broken(self) -> bool {
-        self == Spring::Broken
+    fn is_broken(&self) -> bool {
+        *self == Spring::Broken
     }
 
-    fn is_unknown(self) -> bool {
-        self == Spring::Unknown
+    fn is_unknown(&self) -> bool {
+        *self == Spring::Unknown
     }
 }
 
