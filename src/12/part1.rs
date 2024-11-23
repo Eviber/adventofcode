@@ -3,7 +3,7 @@ use std::fmt::Display;
 use rayon::prelude::*;
 
 pub fn solve(input: &str) -> u64 {
-    println!("{}", input);
+    //println!("{}", input);
     let mut rows: Vec<Row> = input.lines().map(Row::from).collect();
     rows.iter_mut().for_each(Row::simplify);
     rows.par_iter().map(Row::count_solutions).sum()
@@ -50,7 +50,7 @@ impl Row {
     fn count_solutions(&self) -> u64 {
         let Some(i) = self.springs.iter().position(|s| s.is_unknown()) else {
             if self.is_valid() {
-                println!("Valid: {}", self);
+                //println!("Valid: {}", self);
                 return 1;
             }
             return 0;
