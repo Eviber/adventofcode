@@ -106,6 +106,7 @@ impl Row {
             println!("Memo!");
             return res;
         }
+        let input = self.clone();
         assert!(self.springs[0].is_broken() || self.springs[0].is_unknown());
         if self.springs[0].is_broken() {
             self.broken_sets[0] -= 1;
@@ -114,21 +115,28 @@ impl Row {
                 self.broken_sets.remove(0);
                 if self.springs.is_empty() {
                     self.springs = vec![];
-                    return self.count_solutions_inner(memo);
+                    let res = self.count_solutions_inner(memo);
+                    memo.insert(input, res);
+                    return res;
                 }
                 if self.springs[0].is_broken() {
+                    memo.insert(input, 0);
                     return 0; // the current set is larger than it should
                 }
                 self.springs[0] = Spring::Intact; // close the set, in case this spring was unknown
             }
-            return self.count_solutions_inner(memo);
+            let res = self.count_solutions_inner(memo);
+            memo.insert(input, res);
+            return res;
         }
         assert!(self.springs[0].is_unknown());
         let mut broken = self.clone();
         let mut intact = self;
         broken.springs[0] = Spring::Broken;
         intact.springs[0] = Spring::Intact;
-        broken.count_solutions_inner(memo) + intact.count_solutions_inner(memo)
+        let res = broken.count_solutions_inner(memo) + intact.count_solutions_inner(memo);
+        memo.insert(input, res);
+        res
     }
 
     fn count_solutions(self) -> u64 {
