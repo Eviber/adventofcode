@@ -108,33 +108,32 @@ impl Row {
         }
         let input = self.clone();
         assert!(self.springs[0].is_broken() || self.springs[0].is_unknown());
-        if self.springs[0].is_broken() {
-            self.broken_sets[0] -= 1;
-            self.springs.remove(0);
-            if self.broken_sets[0] == 0 {
-                self.broken_sets.remove(0);
-                if self.springs.is_empty() {
-                    self.springs = vec![];
-                    let res = self.count_solutions_inner(memo);
-                    memo.insert(input, res);
-                    return res;
-                }
-                if self.springs[0].is_broken() {
-                    memo.insert(input, 0);
-                    return 0; // the current set is larger than it should
-                }
-                self.springs[0] = Spring::Intact; // close the set, in case this spring was unknown
-            }
-            let res = self.count_solutions_inner(memo);
+        if self.springs[0].is_unknown() {
+            let mut broken = self.clone();
+            let mut intact = self;
+            broken.springs[0] = Spring::Broken;
+            intact.springs[0] = Spring::Intact;
+            let res = broken.count_solutions_inner(memo) + intact.count_solutions_inner(memo);
             memo.insert(input, res);
             return res;
         }
-        assert!(self.springs[0].is_unknown());
-        let mut broken = self.clone();
-        let mut intact = self;
-        broken.springs[0] = Spring::Broken;
-        intact.springs[0] = Spring::Intact;
-        let res = broken.count_solutions_inner(memo) + intact.count_solutions_inner(memo);
+        assert!(self.springs[0].is_broken());
+        self.broken_sets[0] -= 1;
+        self.springs.remove(0);
+        if self.broken_sets[0] == 0 {
+            self.broken_sets.remove(0);
+            if self.springs.is_empty() {
+                let res = self.count_solutions_inner(memo);
+                memo.insert(input, res);
+                return res;
+            }
+            if self.springs[0].is_broken() {
+                memo.insert(input, 0);
+                return 0; // the current set is larger than it should
+            }
+            self.springs[0] = Spring::Intact; // close the set, in case this spring was unknown
+        }
+        let res = self.count_solutions_inner(memo);
         memo.insert(input, res);
         res
     }
