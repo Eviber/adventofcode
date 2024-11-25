@@ -84,16 +84,8 @@ impl Row {
     }
 
     fn count_solutions_inner(mut self, memo: &mut HashMap<Row, u64>) -> u64 {
-        if self.broken_sets.is_empty() && !self.springs.iter().any(Spring::is_broken) {
-            return 1;
-        }
-        if (!self.broken_sets.is_empty() && self.springs.is_empty())
-            || (self.broken_sets.is_empty() && self.springs.iter().any(Spring::is_broken))
-        {
-            return 0;
-        }
         // skip intact springs
-        if self.springs[0].is_intact() {
+        if !self.springs.is_empty() && self.springs[0].is_intact() {
             let next = self
                 .springs
                 .iter()
@@ -102,12 +94,13 @@ impl Row {
                 .count();
             self.springs = self.springs[next..].into();
         }
-        if self.springs.is_empty() {
-            if !self.broken_sets.is_empty() {
-                return 0;
-            } else {
-                return 1;
-            }
+        if self.broken_sets.is_empty() && !self.springs.iter().any(Spring::is_broken) {
+            return 1;
+        }
+        if (!self.broken_sets.is_empty() && self.springs.is_empty())
+            || (self.broken_sets.is_empty() && self.springs.iter().any(Spring::is_broken))
+        {
+            return 0;
         }
         if let Some(&res) = memo.get(&self) {
             println!("Memo!");
@@ -115,28 +108,19 @@ impl Row {
         }
         assert!(self.springs[0].is_broken() || self.springs[0].is_unknown());
         if self.springs[0].is_broken() {
-            // if we cannot fit the next broken set there are no solutions
-            //
-            // we cannot fit a broken set of size n if there is less than n broken or unknown springs,
-            // or if there is an other broken spring after that
-            let len = self
-                .springs
-                .iter()
-                .take_while(|s| !s.is_intact())
-                .count();
-            if len < self.broken_sets[0] {
-                return 0;
+            self.broken_sets[0] -= 1;
+            self.springs.remove(0);
+            if self.broken_sets[0] == 0 {
+                self.broken_sets.remove(0);
+                if self.springs.is_empty() {
+                    self.springs = vec![];
+                    return self.count_solutions_inner(memo);
+                }
+                if self.springs[0].is_broken() {
+                    return 0; // the current set is larger than it should
+                }
+                self.springs[0] = Spring::Intact; // close the set, in case this spring was unknown
             }
-            if let Some(Spring::Broken) = self.springs.get(len) {
-                return 0;
-            }
-            // we can fit the next broken set, so remove it and all corresponding springs, and recurse
-            self.broken_sets = self.broken_sets[1..].into();
-            self.springs = if self.springs.len() > len + 1 {
-                self.springs[(len + 1)..].into()
-            } else {
-                vec![]
-            };
             return self.count_solutions_inner(memo);
         }
         assert!(self.springs[0].is_unknown());
