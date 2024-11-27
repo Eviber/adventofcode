@@ -11,8 +11,8 @@ pub fn solve(input: &str) -> usize {
     }
     grid.iter_mut().for_each(|column| incline(column));
     for y in 0..grid[0].len() {
-        for x in 0..grid.len() {
-            print!("{}", grid[x][y]);
+        for row in &grid {
+            print!("{}", row[y]);
         }
         println!();
     }
@@ -28,7 +28,7 @@ pub fn solve(input: &str) -> usize {
         .sum()
 }
 
-fn incline(column: &mut [Tile]) -> () {
+fn incline(column: &mut [Tile]) {
     let mut block_at = 0;
     for i in 0..column.len() {
         if column[i] == Tile::Cube {
