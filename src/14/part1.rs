@@ -1,8 +1,6 @@
 use std::fmt::Display;
 
 pub fn solve(input: &str) -> usize {
-    println!("{}", input);
-    println!();
     let mut grid = vec![vec![]; input.lines().next().unwrap().len()];
     for line in input.lines() {
         for (i, c) in line.chars().enumerate() {
@@ -10,12 +8,6 @@ pub fn solve(input: &str) -> usize {
         }
     }
     grid.iter_mut().for_each(|column| incline(column));
-    for y in 0..grid[0].len() {
-        for row in &grid {
-            print!("{}", row[y]);
-        }
-        println!();
-    }
     grid.iter()
         .map(|col| {
             col.iter()

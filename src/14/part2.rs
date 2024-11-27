@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 pub fn solve(input: &str) -> usize {
     let mut grid = vec![vec![]; input.lines().next().unwrap().len()];
@@ -7,12 +7,21 @@ pub fn solve(input: &str) -> usize {
             grid[i].push(Tile::from(c));
         }
     }
-    grid.iter_mut().for_each(|column| incline(column));
-    for y in 0..grid[0].len() {
-        for row in &grid {
-            print!("{}", row[y]);
+    let mut states = HashMap::new();
+    let mut i = 0;
+    loop {
+        if states.contains_key(&grid) {
+            break;
         }
-        println!();
+        states.insert(grid.clone(), i);
+        rotate(&mut grid);
+        i += 1;
+    }
+    let offset = states.get(&grid).expect("State should exist");
+    let cycle = i - offset;
+    i = ((1_000_000_000 - offset) / cycle) * cycle + offset;
+    for _ in i..1_000_000_000 {
+        rotate(&mut grid);
     }
     grid.iter()
         .map(|col| {
@@ -26,20 +35,74 @@ pub fn solve(input: &str) -> usize {
         .sum()
 }
 
-fn incline(column: &mut [Tile]) {
-    let mut block_at = 0;
-    for i in 0..column.len() {
-        if column[i] == Tile::Cube {
-            block_at = i + 1;
-        } else if column[i] == Tile::Round {
-            column[i] = Tile::Empty;
-            column[block_at] = Tile::Round;
-            block_at += 1;
+fn rotate(grid: &mut [Vec<Tile>]) {
+    incline_north(grid);
+    incline_west(grid);
+    incline_south(grid);
+    incline_east(grid);
+}
+
+fn incline_north(grid: &mut [Vec<Tile>]) {
+    for column in grid {
+        let mut block_at = 0;
+        for i in 0..column.len() {
+            if column[i] == Tile::Cube {
+                block_at = i + 1;
+            } else if column[i] == Tile::Round {
+                column[i] = Tile::Empty;
+                column[block_at] = Tile::Round;
+                block_at += 1;
+            }
         }
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+fn incline_south(grid: &mut [Vec<Tile>]) {
+    for column in grid {
+        let mut block_at = column.len() - 1;
+        for i in (0..column.len()).rev() {
+            if i > 0 && column[i] == Tile::Cube {
+                block_at = i - 1;
+            } else if column[i] == Tile::Round {
+                column[i] = Tile::Empty;
+                column[block_at] = Tile::Round;
+                block_at = block_at.saturating_sub(1);
+            }
+        }
+    }
+}
+
+fn incline_west(grid: &mut [Vec<Tile>]) {
+    for y in 0..grid[0].len() {
+        let mut block_at = 0;
+        for x in 0..grid.len() {
+            if grid[x][y] == Tile::Cube {
+                block_at = x + 1;
+            } else if grid[x][y] == Tile::Round {
+                grid[x][y] = Tile::Empty;
+                grid[block_at][y] = Tile::Round;
+                block_at += 1;
+            }
+        }
+    }
+}
+
+fn incline_east(grid: &mut [Vec<Tile>]) {
+    for y in 0..grid[0].len() {
+        let mut block_at = grid.len() - 1;
+        for x in (0..grid.len()).rev() {
+            if x > 0 && grid[x][y] == Tile::Cube {
+                block_at = x - 1;
+            } else if grid[x][y] == Tile::Round {
+                grid[x][y] = Tile::Empty;
+                grid[block_at][y] = Tile::Round;
+                block_at = block_at.saturating_sub(1);
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 enum Tile {
     Empty,
     Round,
