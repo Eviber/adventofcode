@@ -12,20 +12,19 @@ pub fn solve(input: &str) -> usize {
             .and_modify(|v| v.push(page_2))
             .or_insert(vec![page_2]);
     }
-    let updates: Vec<Vec<usize>> = updates
-        .split_whitespace()
-        .map(|s| s.split(',').map(|s| s.parse().unwrap()).collect())
-        .collect();
     updates
-        .into_iter()
-        .filter(|update| {
-            update.iter().enumerate().all(|(i, page)| {
-                update
-                    .iter()
-                    .take(i)
-                    .all(|n| rules.get(page).map(|v| !v.contains(n)).unwrap_or(true))
-            })
-        })
+        .split_whitespace()
+        .map(|s| s.split(',').map(|s| s.parse().unwrap()).collect::<Vec<_>>())
+        .filter(|update| is_valid(update, &rules))
         .map(|update| update[update.len() / 2])
         .sum()
+}
+
+fn is_valid(update: &[usize], rules: &HashMap<usize, Vec<usize>>) -> bool {
+    update.iter().enumerate().all(|(i, page)| {
+        update
+            .iter()
+            .take(i)
+            .all(|n| rules.get(page).map(|v| !v.contains(n)).unwrap_or(true))
+    })
 }
