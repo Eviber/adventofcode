@@ -1,31 +1,53 @@
-use Dir::*;
+use rayon::prelude::*;
+
+use Dir::{Down, Left, Right, Up};
 use Tile::{Empty, Obstacle};
 
 pub fn solve(input: &str) -> usize {
     let mut map = Map::from(input);
-    while map.walk_guard() {}
-    map.count_visited()
+
+    let mut visited = Vec::new();
+    visited.push((map.guard.x, map.guard.y));
+    while map.walk_guard() {
+        let x = map.guard.x;
+        let y = map.guard.y;
+        if visited.contains(&(x, y)) {
+            continue;
+        }
+        visited.push((x, y));
+    }
+    map.reset_guard();
+    visited
+        .into_par_iter()
+        .filter(|&(x, y)| {
+            let mut map = map.clone();
+            map.tiles[y][x] = Obstacle;
+            map.is_looping()
+        })
+        .count()
 }
 
+#[derive(Clone)]
 struct Map {
     tiles: Vec<Vec<Tile>>,
-    visited: Vec<Vec<bool>>,
     guard: Guard,
+    initial_guard: Guard,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Tile {
     Empty,
     Obstacle,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Guard {
     x: usize,
     y: usize,
     dir: Dir,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 enum Dir {
     Up,
     Down,
@@ -35,12 +57,34 @@ enum Dir {
 
 impl Map {
     fn walk_guard(&mut self) -> bool {
-        self.visited[self.guard.y][self.guard.x] = true;
         self.guard.walk(&self.tiles)
     }
 
-    fn count_visited(&self) -> usize {
-        self.visited.iter().flat_map(|v| v.iter().filter(|b| **b)).count()
+    fn reset_guard(&mut self) {
+        self.guard = self.initial_guard;
+    }
+
+    fn is_looping(&mut self) -> bool {
+        for _ in 0..10000 {
+            if !self.walk_guard() {
+                self.reset_guard();
+                return false;
+            }
+        }
+        let mut passed = Vec::new();
+        loop {
+            passed.push(self.guard);
+            for _ in 0..1000 {
+                if !self.walk_guard() {
+                    self.reset_guard();
+                    return false;
+                }
+                if passed.contains(&self.guard) {
+                    self.reset_guard();
+                    return true;
+                }
+            }
+        }
     }
 }
 
@@ -102,8 +146,11 @@ impl From<&str> for Map {
             tiles.push(line);
         }
         let guard = Guard::new(x, y);
-        let visited = vec![vec![false; tiles[0].len()]; tiles.len()];
-        Map { tiles, guard, visited }
+        Map {
+            tiles,
+            guard,
+            initial_guard: guard,
+        }
     }
 }
 
