@@ -40,7 +40,10 @@ impl Map {
     }
 
     fn count_visited(&self) -> usize {
-        self.visited.iter().flat_map(|v| v.iter().filter(|b| **b)).count()
+        self.visited
+            .iter()
+            .flat_map(|v| v.iter().filter(|b| **b))
+            .count()
     }
 }
 
@@ -103,7 +106,11 @@ impl From<&str> for Map {
         }
         let guard = Guard::new(x, y);
         let visited = vec![vec![false; tiles[0].len()]; tiles.len()];
-        Map { tiles, guard, visited }
+        Map {
+            tiles,
+            guard,
+            visited,
+        }
     }
 }
 

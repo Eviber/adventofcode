@@ -11,8 +11,5 @@ pub fn solve(input: &str) -> usize {
         .collect();
     a.sort_unstable();
     b.sort_unstable();
-    a.into_iter()
-        .zip(b)
-        .map(|(a, b)| a.abs_diff(b))
-        .sum()
+    a.into_iter().zip(b).map(|(a, b)| a.abs_diff(b)).sum()
 }
