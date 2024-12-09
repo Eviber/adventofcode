@@ -7,8 +7,8 @@ fn main() {
     } else {
         include_str!("input")
     };
-    // println!("Part 1: {}", part1::solve(input));
-    // println!();
+    println!("Part 1: {}", part1::solve(input));
+    println!();
     println!("Part 2: {}", part2::solve(input));
     println!();
 }
