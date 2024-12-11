@@ -1,4 +1,7 @@
-use std::{collections::{HashSet, VecDeque}, iter::repeat};
+use std::{
+    collections::{HashSet, VecDeque},
+    iter::repeat,
+};
 
 pub fn solve(input: &str) -> usize {
     let map: Vec<Vec<u32>> = input
@@ -32,13 +35,13 @@ fn trailhead_score(map: &[Vec<u32>], x: usize, y: usize) -> usize {
             score += 1;
             continue;
         }
-        if x > 0 && map[y][x-1] == map[y][x] + 1 {
+        if x > 0 && map[y][x - 1] == map[y][x] + 1 {
             file.push_back((x - 1, y));
         }
         if x < map[y].len() - 1 && map[y][x + 1] == map[y][x] + 1 {
             file.push_back((x + 1, y));
         }
-        if y > 0 && map[y-1][x] == map[y][x] + 1 {
+        if y > 0 && map[y - 1][x] == map[y][x] + 1 {
             file.push_back((x, y - 1));
         }
         if y < map.len() - 1 && map[y + 1][x] == map[y][x] + 1 {

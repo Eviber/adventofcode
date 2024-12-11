@@ -17,7 +17,8 @@ fn blink(stones: &[u64], count: u64, memo: &mut HashMap<(u64, u64), usize>) -> u
         return 0;
     }
     if stones.len() > 1 {
-        return blink(&stones[0..(stones.len() - 1)], count, memo) + blink(&stones[(stones.len() - 1)..stones.len()], count, memo);
+        return blink(&stones[0..(stones.len() - 1)], count, memo)
+            + blink(&stones[(stones.len() - 1)..stones.len()], count, memo);
     }
     let stone = stones[0];
     if let Some(&res) = memo.get(&(stone, count)) {

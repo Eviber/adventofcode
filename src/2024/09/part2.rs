@@ -16,7 +16,10 @@ pub fn solve(input: &str) -> usize {
     }
     let mut current = disk.last().unwrap().1.unwrap();
     loop {
-        let i = disk.iter().take_while(|&&(_, id)| id != Some(current)).count();
+        let i = disk
+            .iter()
+            .take_while(|&&(_, id)| id != Some(current))
+            .count();
         let size = disk[i].0;
         let mut space = 0;
         let mut j = 0;
@@ -28,7 +31,7 @@ pub fn solve(input: &str) -> usize {
                 break;
             }
             space = disk[j].0;
-            if space < size  {
+            if space < size {
                 j += 1;
             }
         }

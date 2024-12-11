@@ -17,7 +17,8 @@ fn blink(stones: &[u64], count: i32) -> usize {
         let stones = blink_one(stones[0]);
         return blink(&stones, count - 1);
     }
-    blink(&stones[0..(stones.len() - 1)], count) + blink(&stones[(stones.len() - 1)..stones.len()], count)
+    blink(&stones[0..(stones.len() - 1)], count)
+        + blink(&stones[(stones.len() - 1)..stones.len()], count)
 }
 
 fn blink_one(stone: u64) -> Vec<u64> {
