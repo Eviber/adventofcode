@@ -50,8 +50,8 @@ impl Machine {
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 struct Pos {
-    x: i32,
-    y: i32,
+    x: i64,
+    y: i64,
 }
 
 impl Pos {
@@ -104,8 +104,8 @@ impl From<&str> for Machine {
             y: by.parse().unwrap(),
         };
         let prize = Pos {
-            x: px.parse().unwrap(),
-            y: py.parse().unwrap(),
+            x: px.parse::<i64>().unwrap() + 10000000000000,
+            y: py.parse::<i64>().unwrap() + 10000000000000,
         };
         Machine { a, b, prize }
     }
