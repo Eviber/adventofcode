@@ -1,9 +1,10 @@
 use std::{
     fmt::Display,
+    iter,
     ops::{Index, IndexMut},
 };
-use Dir::{Up, Down, Left, Right};
-use Tile::{Wall, Box, Empty};
+use Dir::{Down, Left, Right, Up};
+use Tile::*;
 
 pub fn solve(input: &str) -> usize {
     let (map_str, dirs) = input.split_once("\n\n").unwrap();
@@ -12,14 +13,13 @@ pub fn solve(input: &str) -> usize {
     for dir in dirs {
         map.move_bot(dir);
     }
-    eprintln!("{map}");
     map.tiles
         .into_iter()
         .enumerate()
         .flat_map(|(y, l)| {
             l.into_iter()
                 .enumerate()
-                .filter(|(_, t)| *t == Box)
+                .filter(|(_, t)| *t == BoxLeft)
                 .map(move |(x, _)| x + 100 * y)
         })
         .sum()
@@ -36,7 +36,8 @@ enum Dir {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Tile {
     Wall,
-    Box,
+    BoxLeft,
+    BoxRight,
     Empty,
 }
 
@@ -58,18 +59,70 @@ struct Map {
 
 impl Map {
     fn move_bot(&mut self, dir: Dir) {
-        let mut next = self.robot.pos + dir;
-        while self[next] == Box {
-            next += dir;
-        }
-        if self[next] == Wall {
+        assert!(self[self.robot.pos] == Empty);
+        let next = self.robot.pos + dir;
+        if !self.can_push(next, dir) {
             return;
         }
-        while next != self.robot.pos {
-            self[next] = self[next - dir];
-            next -= dir;
+        self.push(next, dir);
+        self.robot.pos = next;
+    }
+
+    fn can_push(&self, pos: UVec2, dir: Dir) -> bool {
+        if self[pos] == Empty {
+            return true;
         }
-        self.robot.pos += dir;
+        if self[pos] == Wall {
+            return false;
+        }
+        let mut left = pos;
+        if self[left] == BoxRight {
+            left.x -= 1;
+        }
+        let mut right = left;
+        right.x += 1;
+        match dir {
+            Up | Down => self.can_push(left + dir, dir) && self.can_push(right + dir, dir),
+            Left | Right => self.can_push(pos + dir, dir),
+        }
+    }
+
+    fn push(&mut self, pos: UVec2, dir: Dir) {
+        assert!(self[pos] != Wall);
+        if self[pos] == Empty {
+            return;
+        }
+        let mut left = pos;
+        if self[left] == BoxRight {
+            left.x -= 1;
+        }
+        let mut right = left;
+        right.x += 1;
+        match dir {
+            Up | Down => {
+                self.push(left + dir, dir);
+                self.push(right + dir, dir);
+                self[left + dir] = self[left];
+                self[right + dir] = self[right];
+                self[left] = Empty;
+                self[right] = Empty;
+            }
+            Left | Right => {
+                self.push(pos + dir, dir);
+                self[pos + dir] = self[pos];
+                self[pos] = Empty;
+            },
+        }
+    }
+}
+
+impl Tile {
+    fn pair_from(c: char) -> impl Iterator<Item = Tile> {
+        let tile = Tile::from(c);
+        if tile == BoxLeft {
+            return iter::once(tile).chain(iter::once(BoxRight));
+        }
+        iter::once(tile).chain(iter::once(tile))
     }
 }
 
@@ -162,8 +215,20 @@ impl Display for Tile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Wall => write!(f, "#"),
-            Box => write!(f, "O"),
+            BoxLeft => write!(f, "["),
+            BoxRight => write!(f, "]"),
             Empty => write!(f, "."),
+        }
+    }
+}
+
+impl Display for Dir {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Up => write!(f, "up"),
+            Down => write!(f, "down"),
+            Left => write!(f, "left"),
+            Right => write!(f, "right"),
         }
     }
 }
@@ -177,18 +242,18 @@ impl From<&str> for Map {
             .map(|(y, l)| {
                 l.chars()
                     .enumerate()
-                    .map(|(x, c)| {
+                    .flat_map(|(x, c)| {
                         if c == '@' {
                             pos = Some((x, y));
                         }
-                        Tile::from(c)
+                        Tile::pair_from(c)
                     })
                     .collect()
             })
             .collect();
         let (x, y) = pos.expect("Invalid map, missing '@'");
         let robot = Robot {
-            pos: UVec2::new(x, y),
+            pos: UVec2::new(x * 2, y),
         };
         Map { tiles, robot }
     }
@@ -198,7 +263,7 @@ impl From<char> for Tile {
     fn from(c: char) -> Tile {
         match c {
             '#' => Wall,
-            'O' => Box,
+            'O' => BoxLeft,
             '.' | '@' => Empty,
             _ => panic!("Invalid tile character '{c}'"),
         }
