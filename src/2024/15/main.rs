@@ -1,7 +1,10 @@
 mod part1;
+mod part2;
 
 fn run(input: &str) {
     println!("Part 1: {}", part1::solve(input));
+    println!();
+    println!("Part 2: {}", part2::solve(input));
     println!();
 }
 
