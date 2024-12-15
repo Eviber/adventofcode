@@ -1,7 +1,9 @@
 mod part1;
+mod part2;
 
 fn call<const W: i32, const H: i32>(input: &str) {
     println!("Part 1: {}", part1::solve::<W, H>(input));
+    println!("Part 2: {}", part2::solve::<W, H>(input));
 }
 
 fn main() {
