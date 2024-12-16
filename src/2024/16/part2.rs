@@ -1,7 +1,5 @@
 use std::{
-    collections::VecDeque,
-    fmt::Display,
-    ops::{Index, IndexMut},
+    cmp::Reverse, collections::BinaryHeap, fmt::Display, ops::{Index, IndexMut}
 };
 use Dir::{East, North, South, West};
 use Tile::{Empty, Wall};
@@ -10,18 +8,52 @@ pub fn solve(input: &str) -> usize {
     let map = Map::from(input);
     let reindeer = map.starting_reindeer;
     let mut best_scores = vec![vec![Scores::new(); map.tiles[0].len()]; map.tiles.len()];
-    let mut file: VecDeque<Reindeer> = VecDeque::new();
-    file.push_back(reindeer);
-    while let Some(reindeer) = file.pop_front() {
-        if best_scores[reindeer.pos.y][reindeer.pos.x][reindeer.dir] <= reindeer.score {
+    let mut file: BinaryHeap<Reverse<(usize, Vec<UVec2>, Reindeer)>> = BinaryHeap::new();
+    file.push(Reverse((0, vec![], reindeer)));
+    let mut min = usize::MAX;
+    let mut visited = vec![vec![false; map.tiles[0].len()]; map.tiles.len()];
+    while let Some(Reverse((_, mut path, reindeer))) = file.pop() {
+        let pos = reindeer.pos;
+        if best_scores[pos.y][pos.x][reindeer.dir] < reindeer.score {
             continue;
         }
-        best_scores[reindeer.pos.y][reindeer.pos.x][reindeer.dir] = reindeer.score;
-        file.push_back(reindeer.turn_left());
-        file.push_back(reindeer.turn_right());
-        file.push_back(reindeer.walk(&map));
+        path.push(pos);
+        if pos == map.end && reindeer.score <= min {
+            min = reindeer.score;
+            for pos in path {
+                visited[pos.y][pos.x] = true;
+            }
+            continue;
+        }
+        best_scores[pos.y][pos.x][reindeer.dir] = reindeer.score;
+        let next = reindeer.turn_left().walk(&map);
+        if !path.contains(&next.pos) {
+            file.push(Reverse((next.score, path.clone(), next)));
+        }
+        let next = reindeer.turn_right().walk(&map);
+        if !path.contains(&next.pos) {
+            file.push(Reverse((next.score, path.clone(), next)));
+        }
+        let next = reindeer.walk(&map);
+        if !path.contains(&next.pos) {
+            file.push(Reverse((next.score, path, next)));
+        }
     }
-    best_scores[map.end.y][map.end.x].scores.into_iter().min().unwrap()
+    for y in 0..visited.len() {
+        for x in 0..visited[0].len() {
+            if visited[y][x] {
+                print!("O");
+                continue;
+            }
+            print!("{}", map.tiles[y][x]);
+        }
+        println!();
+    }
+    visited
+        .into_iter()
+        .flat_map(|l| l.into_iter())
+        .filter(|b| *b)
+        .count()
 }
 
 #[derive(Clone, Copy)]
@@ -38,6 +70,7 @@ impl Scores {
 }
 
 #[derive(Clone, Copy)]
+#[derive(Eq, Ord, PartialEq, PartialOrd)]
 struct Reindeer {
     pos: UVec2,
     dir: Dir,
@@ -45,6 +78,10 @@ struct Reindeer {
 }
 
 #[derive(Clone, Copy)]
+#[derive(Eq)]
+#[derive(PartialEq)]
+#[derive(Ord)]
+#[derive(PartialOrd)]
 enum Dir {
     North,
     South,
@@ -58,7 +95,8 @@ enum Tile {
     Empty,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Ord, PartialOrd)]
 struct UVec2 {
     x: usize,
     y: usize,
