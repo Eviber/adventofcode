@@ -2,7 +2,10 @@ pub fn solve(input: &str) -> usize {
     let (patterns, target_patterns) = input.split_once("\n\n").expect("one empty line");
     let patterns: Vec<_> = patterns.split(", ").collect();
 
-    target_patterns.lines().filter(|target| is_pattern_possible(target, &patterns)).count()
+    target_patterns
+        .lines()
+        .filter(|target| is_pattern_possible(target, &patterns))
+        .count()
 }
 
 fn is_pattern_possible(target: &str, patterns: &[&str]) -> bool {
