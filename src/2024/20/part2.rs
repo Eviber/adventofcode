@@ -16,10 +16,10 @@ pub fn solve(input: &str) -> usize {
             if map.tiles[y][x] == Wall {
                 continue;
             }
-            for y2 in y.saturating_sub(20)..map.tiles.len().min(y + 20) {
-                for x2 in x.saturating_sub(20)..map.tiles[0].len().min(x + 20) {
+            for y2 in y.saturating_sub(20)..map.tiles.len().min(y + 21) {
+                for x2 in x.saturating_sub(20)..map.tiles[0].len().min(x + 21) {
                     let dist = x.abs_diff(x2) + y.abs_diff(y2);
-                    if map.tiles[y2][x2] == Wall || dist > 2 || pairs.contains(&(x, y, x2, y2)) {
+                    if map.tiles[y2][x2] == Wall || dist > 20 || pairs.contains(&(x, y, x2, y2)) {
                         continue;
                     }
                     pairs.insert((x, y, x2, y2));
@@ -39,7 +39,7 @@ impl Map {
     fn get_len_map(&self) -> Vec<Vec<Option<usize>>> {
         let mut visited = vec![vec![None; self.tiles[0].len()]; self.tiles.len()];
         let mut file: VecDeque<(usize, UVec2)> = VecDeque::new();
-        file.push_back((0, self.start));
+        file.push_back((0, self.end));
         while let Some((len, pos)) = file.pop_front() {
             if pos.y >= self.tiles.len()
                 || pos.x >= self.tiles[0].len()
@@ -49,7 +49,7 @@ impl Map {
                 continue;
             }
             visited[pos.y][pos.x] = Some(len);
-            if pos == self.end {
+            if pos == self.start {
                 return visited;
             }
             file.push_back((len + 1, pos + North));
