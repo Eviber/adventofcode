@@ -1,54 +1,51 @@
+use std::iter;
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::VecDeque,
     fmt::Display,
     ops::{Index, IndexMut},
 };
 use Dir::{East, North, South, West};
 use Tile::{Empty, Wall};
 
-pub fn solve(input: &str) -> usize {
+pub fn solve(input: &str, cheat_len: usize, score_threshold: usize) -> usize {
     let map = Map::from(input);
-    let len_map = map.get_len_map();
-    let mut pairs = HashSet::new();
-    let mut count = 0;
-    for y in 0..map.tiles.len() {
-        for x in 0..map.tiles[0].len() {
-            if map.tiles[y][x] == Wall {
-                continue;
-            }
-            for y2 in y.saturating_sub(20)..map.tiles.len().min(y + 21) {
-                for x2 in x.saturating_sub(20)..map.tiles[0].len().min(x + 21) {
-                    let dist = x.abs_diff(x2) + y.abs_diff(y2);
-                    if map.tiles[y2][x2] == Wall || dist > 20 || pairs.contains(&(x, y, x2, y2)) {
-                        continue;
+    let width = map.tiles[0].len();
+    let height = map.tiles.len();
+
+    let dist_to_end = map.get_len_map();
+    map.iter_pos()
+        .filter(|&pos| map[pos] != Wall)
+        .flat_map(|start_cheat| {
+            let window = (start_cheat - cheat_len).iter_to((start_cheat + cheat_len).bound_to(width, height));
+            iter::repeat(start_cheat)
+                .zip(window)
+                .filter(|&(start_cheat, end_cheat)| {
+                    let dist = start_cheat.manhattan(end_cheat);
+                    if map[end_cheat] == Wall || dist > cheat_len {
+                        return false;
                     }
-                    pairs.insert((x, y, x2, y2));
-                    let len = len_map[y][x].unwrap();
-                    let len2 = len_map[y2][x2].unwrap();
-                    if len >= len2 + dist + 100 {
-                        count += 1;
-                    }
-                }
-            }
-        }
-    }
-    count
+                    let dist_orig = dist_to_end[start_cheat.y][start_cheat.x];
+                    let dist_cheat = dist_to_end[end_cheat.y][end_cheat.x] + dist + score_threshold;
+                    dist_orig >= dist_cheat
+                })
+        })
+        .count()
 }
 
 impl Map {
-    fn get_len_map(&self) -> Vec<Vec<Option<usize>>> {
-        let mut visited = vec![vec![None; self.tiles[0].len()]; self.tiles.len()];
+    fn get_len_map(&self) -> Vec<Vec<usize>> {
+        let mut visited = vec![vec![usize::MAX; self.tiles[0].len()]; self.tiles.len()];
         let mut file: VecDeque<(usize, UVec2)> = VecDeque::new();
         file.push_back((0, self.end));
         while let Some((len, pos)) = file.pop_front() {
             if pos.y >= self.tiles.len()
                 || pos.x >= self.tiles[0].len()
-                || visited[pos.y][pos.x].is_some()
+                || visited[pos.y][pos.x] < usize::MAX
                 || self[pos] == Wall
             {
                 continue;
             }
-            visited[pos.y][pos.x] = Some(len);
+            visited[pos.y][pos.x] = len;
             if pos == self.start {
                 return visited;
             }
@@ -58,6 +55,15 @@ impl Map {
             file.push_back((len + 1, pos + West));
         }
         panic!("End unreachable");
+    }
+
+    fn iter_pos(&self) -> impl Iterator<Item = UVec2> {
+        let start = UVec2 { x: 0, y: 0 };
+        let end = UVec2 {
+            x: self.tiles[0].len() - 1,
+            y: self.tiles.len() - 1,
+        };
+        start.iter_to(end)
     }
 }
 
@@ -75,7 +81,7 @@ enum Tile {
     Empty,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct UVec2 {
     x: usize,
     y: usize,
@@ -91,6 +97,20 @@ impl UVec2 {
     fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
+
+    fn manhattan(self, other: UVec2) -> usize {
+        self.x.abs_diff(other.x) + self.y.abs_diff(other.y)
+    }
+
+    fn bound_to(mut self, width: usize, height: usize) -> Self {
+        self.x = self.x.min(width - 1);
+        self.y = self.y.min(height - 1);
+        self
+    }
+
+    fn iter_to(self, end: UVec2) -> impl Iterator<Item = UVec2> {
+        (self.y..=end.y).flat_map(move |y| (self.x..=end.x).map(move |x| UVec2 { x, y }))
+    }
 }
 
 impl IndexMut<UVec2> for Map {
@@ -104,6 +124,22 @@ impl Index<UVec2> for Map {
 
     fn index(&self, index: UVec2) -> &Self::Output {
         &self.tiles[index.y][index.x]
+    }
+}
+
+impl std::ops::Add<usize> for UVec2 {
+    type Output = UVec2;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        UVec2::new(self.x + rhs, self.y + rhs)
+    }
+}
+
+impl std::ops::Sub<usize> for UVec2 {
+    type Output = UVec2;
+
+    fn sub(self, rhs: usize) -> Self::Output {
+        UVec2::new(self.x.saturating_sub(rhs), self.y.saturating_sub(rhs))
     }
 }
 
