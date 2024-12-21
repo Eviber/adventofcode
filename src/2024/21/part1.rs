@@ -77,21 +77,45 @@ impl Keypad {
         for &c in &self.code {
             let (target_x, target_y) = self.pos(c);
             while self.x != target_x || self.y != target_y {
-                while self.x > target_x && (self.y == target_y || self.y != blank.1) {
+                while self.x > target_x
+                    && (self.x < blank.0
+                        || target_x > blank.0
+                        || self.y == target_y
+                        || self.y != blank.1)
+                {
                     self.x -= 1;
+                    assert!((self.x, self.y) != blank);
                     commands.push('<');
                 }
-                while self.x < target_x && (self.y == target_y || self.y != blank.1) {
-                    self.x += 1;
-                    commands.push('>');
-                }
-                while self.y > target_y && (self.x == target_x || self.x != blank.0) {
+                while self.y > target_y
+                    && (self.y < blank.1
+                        || target_y > blank.1
+                        || self.x == target_x
+                        || self.x != blank.0)
+                {
                     self.y -= 1;
+                    assert!((self.x, self.y) != blank);
                     commands.push('^');
                 }
-                while self.y < target_y && (self.x == target_x || self.x != blank.0) {
+                while self.y < target_y
+                    && (self.y > blank.1
+                        || target_y < blank.1
+                        || self.x == target_x
+                        || self.x != blank.0)
+                {
                     self.y += 1;
+                    assert!((self.x, self.y) != blank);
                     commands.push('v');
+                }
+                while self.x < target_x
+                    && (self.x > blank.0
+                        || target_x < blank.0
+                        || self.y == target_y
+                        || self.y != blank.1)
+                {
+                    self.x += 1;
+                    assert!((self.x, self.y) != blank);
+                    commands.push('>');
                 }
             }
             commands.push('A');
@@ -103,7 +127,7 @@ impl Keypad {
 impl From<&str> for Keypad {
     fn from(s: &str) -> Self {
         let code: Vec<char> = s.chars().collect();
-        let kind = if code[0].is_ascii_digit() {
+        let kind = if code[0].is_ascii_digit() || code[1].is_ascii_digit() {
             KeypadType::Digital
         } else {
             KeypadType::Directional
