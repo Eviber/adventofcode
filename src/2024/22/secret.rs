@@ -9,10 +9,11 @@ impl Iterator for Secret {
     type Item = int;
 
     fn next(&mut self) -> Option<Self::Item> {
+        let value = self.value;
         *self = self.mix(*self * 64).prune();
         *self = self.mix(*self / 32).prune();
         *self = self.mix(*self * 2048).prune();
-        Some(self.value)
+        Some(value)
     }
 }
 

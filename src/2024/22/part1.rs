@@ -4,7 +4,7 @@ pub fn solve(input: &str) -> int {
     input
         .lines()
         .map(Secret::from)
-        .map(|mut secret| secret.nth(1999).unwrap())
+        .map(|mut secret| secret.nth(2000).unwrap())
         .sum()
 }
 
