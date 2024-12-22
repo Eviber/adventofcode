@@ -1,10 +1,12 @@
+pub use i64 as int;
+
 #[derive(Clone, Copy)]
 pub struct Secret {
-    value: usize,
+    value: int,
 }
 
 impl Iterator for Secret {
-    type Item = usize;
+    type Item = int;
 
     fn next(&mut self) -> Option<Self::Item> {
         *self = self.mix(*self * 64).prune();
@@ -24,35 +26,35 @@ impl Secret {
     }
 }
 
-impl std::ops::Mul<usize> for Secret {
+impl std::ops::Mul<int> for Secret {
     type Output = Secret;
 
-    fn mul(self, rhs: usize) -> Self::Output {
+    fn mul(self, rhs: int) -> Self::Output {
         Secret {
             value: self.value * rhs,
         }
     }
 }
 
-impl std::ops::Div<usize> for Secret {
+impl std::ops::Div<int> for Secret {
     type Output = Secret;
 
-    fn div(self, rhs: usize) -> Self::Output {
+    fn div(self, rhs: int) -> Self::Output {
         Secret {
             value: self.value / rhs,
         }
     }
 }
 
-impl From<usize> for Secret {
-    fn from(value: usize) -> Self {
+impl From<int> for Secret {
+    fn from(value: int) -> Self {
         Secret { value }
     }
 }
 
 impl From<&str> for Secret {
     fn from(s: &str) -> Self {
-        s.trim().parse::<usize>().unwrap().into()
+        s.trim().parse::<int>().unwrap().into()
     }
 }
 

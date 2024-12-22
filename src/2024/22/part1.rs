@@ -1,6 +1,6 @@
-use crate::secret::Secret;
+use crate::secret::{int, Secret};
 
-pub fn solve(input: &str) -> usize {
+pub fn solve(input: &str) -> int {
     input
         .lines()
         .map(Secret::from)

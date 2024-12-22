@@ -1,6 +1,6 @@
 mod part1;
 
-mod secret;
+pub mod secret;
 
 fn main() {
     let input = include_str!("input");
